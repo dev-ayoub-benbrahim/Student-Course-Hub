@@ -1,4 +1,4 @@
-import client from "../db/connection.ts";
+import client from "../db/connection.js";
 import * as bcrypt from "bcrypt";
 
 export class Staff {
@@ -7,27 +7,27 @@ export class Staff {
     return result.rows;
   }
 
-  static async findById(id: number) {
+  static async findById(id) {
     const result = await client.queryObject("SELECT * FROM staff WHERE id = $1", [id]);
     return result.rows[0] || null;
   }
 
-  static async findByEmail(email: string) {
+  static async findByEmail(email) {
     const result = await client.queryObject("SELECT * FROM staff WHERE email = $1", [email]);
     return result.rows[0] || null;
   }
 
-  static async authenticate(email: string, password: string) {
+  static async authenticate(email, password) {
     const staff = await this.findByEmail(email);
     if (!staff) return null;
 
-    const isValid = await bcrypt.compare(password, (staff as any).password);
+    const isValid = await bcrypt.compare(password, staff.password);
     if (!isValid) return null;
 
     return staff;
   }
 
-  static async create(data: any) {
+  static async create(data) {
     const hashedPassword = await bcrypt.hash(data.password);
     const result = await client.queryObject(
       `INSERT INTO staff (name, email, password)
@@ -38,9 +38,9 @@ export class Staff {
     return result.rows[0];
   }
 
-  static async getLedModules(staffId: number) {
+  static async getLedModules(staffId) {
     const result = await client.queryObject(
-      `SELECT * FROM modules 
+      `SELECT * FROM modules
        WHERE module_leader_id = $1
        ORDER BY code`,
       [staffId]
@@ -48,7 +48,7 @@ export class Staff {
     return result.rows;
   }
 
-  static async getProgrammes(staffId: number) {
+  static async getProgrammes(staffId) {
     const result = await client.queryObject(
       `SELECT DISTINCT p.*, COUNT(DISTINCT m.id) as module_count
        FROM programmes p

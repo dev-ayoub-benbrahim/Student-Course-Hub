@@ -1,5 +1,5 @@
 import { Router } from "oak";
-import * as AuthController from "../controllers/auth.controller.ts";
+import * as AuthController from "../controllers/auth.controller.js";
 
 export const authRoutes = new Router();
 

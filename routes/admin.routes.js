@@ -1,6 +1,6 @@
 import { Router } from "oak";
-import * as AdminController from "../controllers/admin.controller.ts";
-import { requireAdminAuth } from "../middleware/auth.ts";
+import * as AdminController from "../controllers/admin.controller.js";
+import { requireAdminAuth } from "../middleware/auth.js";
 
 export const adminRoutes = new Router();
 

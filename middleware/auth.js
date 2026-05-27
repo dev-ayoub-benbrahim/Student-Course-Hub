@@ -1,7 +1,6 @@
-import { Context } from "oak";
-import { Staff } from "../models/mod.ts";
+import { Staff } from "../models/mod.js";
 
-export async function requireAdminAuth(ctx: Context, next: () => Promise<unknown>) {
+export async function requireAdminAuth(ctx, next) {
   const session = ctx.state.session;
 
   if (!session || !session.adminId) {
@@ -12,7 +11,7 @@ export async function requireAdminAuth(ctx: Context, next: () => Promise<unknown
   await next();
 }
 
-export async function requireStaffAuth(ctx: Context, next: () => Promise<unknown>) {
+export async function requireStaffAuth(ctx, next) {
   const session = ctx.state.session;
 
   if (!session || !session.staffId) {
@@ -33,7 +32,7 @@ export async function requireStaffAuth(ctx: Context, next: () => Promise<unknown
   await next();
 }
 
-export async function redirectIfAuth(ctx: Context, next: () => Promise<unknown>) {
+export async function redirectIfAuth(ctx, next) {
   const session = ctx.state.session;
 
   if (session && session.adminId) {
@@ -44,7 +43,7 @@ export async function redirectIfAuth(ctx: Context, next: () => Promise<unknown>)
   await next();
 }
 
-export async function attachAdmin(ctx: Context, next: () => Promise<unknown>) {
+export async function attachAdmin(ctx, next) {
   const session = ctx.state.session;
 
   if (session) {
@@ -52,10 +51,7 @@ export async function attachAdmin(ctx: Context, next: () => Promise<unknown>) {
     const adminEmail = session.adminEmail;
 
     if (adminId) {
-      ctx.state.admin = {
-        id: adminId,
-        email: adminEmail,
-      };
+      ctx.state.admin = { id: adminId, email: adminEmail };
       ctx.state.isAdmin = true;
     }
 

@@ -1,9 +1,8 @@
-import client from "./connection.ts";
+import client from "./connection.js";
 import { hash } from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 console.log("Starting seed...");
 
-// Clear existing data
 await client.queryArray("DELETE FROM student_interests");
 await client.queryArray("DELETE FROM programme_modules");
 await client.queryArray("DELETE FROM students");
@@ -14,7 +13,6 @@ await client.queryArray("DELETE FROM admins");
 
 console.log("Cleared existing data");
 
-// Seed staff
 const staff = [
   { name: "Dr. Sarah Johnson", email: "s.johnson@dmu.ac.uk" },
   { name: "Prof. James Taylor", email: "j.taylor@dmu.ac.uk" },
@@ -32,12 +30,11 @@ for (const s of staff) {
     "INSERT INTO staff (name, email, password) VALUES ($1, $2, $3) RETURNING id",
     [s.name, s.email, staffPassword]
   );
-  staffIds.push((result.rows[0] as any).id);
+  staffIds.push(result.rows[0].id);
 }
 
 console.log("Seeded staff");
 
-// Seed programmes
 const programmes = [
   {
     title: "BSc Computer Science",
@@ -90,12 +87,11 @@ for (const p of programmes) {
     "INSERT INTO programmes (title, level, description, programme_leader_id, image_url, published) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
     [p.title, p.level, p.description, p.programme_leader_id, p.image_url, true]
   );
-  programmeIds.push((result.rows[0] as any).id);
+  programmeIds.push(result.rows[0].id);
 }
 
 console.log("Seeded programmes");
 
-// Seed modules
 const modules = [
   { code: "CTEC3451", title: "Development Project", credits: 30, description: "Final year individual development project", module_leader_id: staffIds[0] },
   { code: "IMAT3104", title: "Machine Learning", credits: 15, description: "Supervised and unsupervised learning algorithms", module_leader_id: staffIds[3] },
@@ -120,12 +116,11 @@ for (const m of modules) {
     "INSERT INTO modules (code, title, credits, description, module_leader_id) VALUES ($1, $2, $3, $4, $5) RETURNING id",
     [m.code, m.title, m.credits, m.description, m.module_leader_id]
   );
-  moduleIds.push((result.rows[0] as any).id);
+  moduleIds.push(result.rows[0].id);
 }
 
 console.log("Seeded modules");
 
-// Link programmes and modules
 const programmeModules = [
   { programme_id: programmeIds[0], module_id: moduleIds[0], year: 3 },
   { programme_id: programmeIds[0], module_id: moduleIds[6], year: 2 },
@@ -159,7 +154,6 @@ for (const pm of programmeModules) {
 
 console.log("Linked programmes and modules");
 
-// Seed students
 const students = [
   { name: "Alice Smith", email: "alice@student.dmu.ac.uk" },
   { name: "Bob Johnson", email: "bob@student.dmu.ac.uk" },
@@ -175,12 +169,11 @@ for (const s of students) {
     "INSERT INTO students (name, email) VALUES ($1, $2) RETURNING id",
     [s.name, s.email]
   );
-  studentIds.push((result.rows[0] as any).id);
+  studentIds.push(result.rows[0].id);
 }
 
 console.log("Seeded students");
 
-// Seed student interests
 await client.queryArray(
   "INSERT INTO student_interests (student_id, programme_id, registered_at) VALUES ($1, $2, NOW())",
   [studentIds[0], programmeIds[0]]
@@ -196,7 +189,6 @@ await client.queryArray(
 
 console.log("Seeded student interests");
 
-// Seed admin
 const adminPassword = await hash("admin123");
 await client.queryArray(
   "INSERT INTO admins (email, password) VALUES ($1, $2)",

@@ -1,4 +1,4 @@
-import client from "../db/connection.ts";
+import client from "../db/connection.js";
 
 export class Student {
   static async findAll() {
@@ -6,17 +6,17 @@ export class Student {
     return result.rows;
   }
 
-  static async findById(id: number) {
+  static async findById(id) {
     const result = await client.queryObject("SELECT * FROM students WHERE id = $1", [id]);
     return result.rows[0] || null;
   }
 
-  static async findByEmail(email: string) {
+  static async findByEmail(email) {
     const result = await client.queryObject("SELECT * FROM students WHERE email = $1", [email]);
     return result.rows[0] || null;
   }
 
-  static async create(data: any) {
+  static async create(data) {
     const result = await client.queryObject(
       `INSERT INTO students (name, email)
        VALUES ($1, $2)
@@ -26,14 +26,14 @@ export class Student {
     return result.rows[0];
   }
 
-  static async delete(id: number) {
+  static async delete(id) {
     await client.queryObject("DELETE FROM student_interests WHERE student_id = $1", [id]);
     await client.queryObject("DELETE FROM students WHERE id = $1", [id]);
   }
 
-  static async findAllWithProgrammes(studentId: number) {
+  static async findAllWithProgrammes(studentId) {
     const result = await client.queryObject(
-      `SELECT p.*, si.registered_at 
+      `SELECT p.*, si.registered_at
        FROM programmes p
        JOIN student_interests si ON p.id = si.programme_id
        WHERE si.student_id = $1
@@ -43,16 +43,16 @@ export class Student {
     return result.rows;
   }
 
-  static async hasInterest(studentId: number, programmeId: number) {
+  static async hasInterest(studentId, programmeId) {
     const result = await client.queryObject(
-      `SELECT * FROM student_interests 
+      `SELECT * FROM student_interests
        WHERE student_id = $1 AND programme_id = $2`,
       [studentId, programmeId]
     );
     return result.rows.length > 0;
   }
 
-  static async registerInterest(studentId: number, programmeId: number) {
+  static async registerInterest(studentId, programmeId) {
     await client.queryObject(
       `INSERT INTO student_interests (student_id, programme_id, registered_at)
        VALUES ($1, $2, NOW())`,
@@ -60,7 +60,7 @@ export class Student {
     );
   }
 
-  static async withdrawInterest(studentId: number, programmeId: number) {
+  static async withdrawInterest(studentId, programmeId) {
     await client.queryObject(
       `DELETE FROM student_interests
        WHERE student_id = $1 AND programme_id = $2`,

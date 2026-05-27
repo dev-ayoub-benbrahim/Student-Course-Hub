@@ -1,22 +1,21 @@
-import { Context } from "oak";
-import { Staff } from "../models/Staff.ts";
-import { render } from "../utils/render.ts";
-import { setErrorFlash } from "../utils/flash.ts";
+import { Staff } from "../models/Staff.js";
+import { render } from "../utils/render.js";
+import { setErrorFlash } from "../utils/flash.js";
 
-export async function showDashboard(ctx: Context) {
+export async function showDashboard(ctx) {
   try {
     const staffId = ctx.state.session.staffId;
     const staff = await Staff.findById(staffId);
-    
+
     if (!staff) {
       setErrorFlash(ctx, "Staff not found.");
       ctx.response.redirect("/staff/login");
       return;
     }
-    
+
     const ledModules = await Staff.getLedModules(staffId);
     const programmes = await Staff.getProgrammes(staffId);
-    
+
     await render(ctx, "views/staff-dashboard.js", "staffDashboardView", {
       title: "Staff Dashboard",
       staff,

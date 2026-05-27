@@ -1,36 +1,27 @@
-import { Context } from "oak";
-
-export type FlashType = 'success' | 'error' | 'info' | 'warning';
-
-export interface FlashMessage {
-  type: FlashType;
-  message: string;
-}
-
-export function setFlash(ctx: Context, type: FlashType, message: string) {
+export function setFlash(ctx, type, message) {
   const session = ctx.state.session;
   if (session) {
     session.flash = { type, message };
   }
 }
 
-export function setSuccessFlash(ctx: Context, message: string) {
+export function setSuccessFlash(ctx, message) {
   setFlash(ctx, 'success', message);
 }
 
-export function setErrorFlash(ctx: Context, message: string) {
+export function setErrorFlash(ctx, message) {
   setFlash(ctx, 'error', message);
 }
 
-export function setInfoFlash(ctx: Context, message: string) {
+export function setInfoFlash(ctx, message) {
   setFlash(ctx, 'info', message);
 }
 
-export function setWarningFlash(ctx: Context, message: string) {
+export function setWarningFlash(ctx, message) {
   setFlash(ctx, 'warning', message);
 }
 
-export function getFlash(ctx: Context): FlashMessage | null {
+export function getFlash(ctx) {
   const session = ctx.state.session;
   if (session && session.flash) {
     const flash = session.flash;

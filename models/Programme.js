@@ -1,7 +1,7 @@
-import client from "../db/connection.ts";
+import client from "../db/connection.js";
 
 export class Programme {
-  static async findAll(filters: any = {}) {
+  static async findAll(filters = {}) {
     let query = `SELECT p.*,
       s.name as programme_leader_name,
       s.email as programme_leader_email,
@@ -9,7 +9,7 @@ export class Programme {
       FROM programmes p
       LEFT JOIN staff s ON p.programme_leader_id = s.id
       WHERE 1=1`;
-    const params: any[] = [];
+    const params = [];
     let paramIndex = 1;
 
     if (filters.level) {
@@ -36,18 +36,18 @@ export class Programme {
     return result.rows;
   }
 
-  static async findById(id: number) {
+  static async findById(id) {
     const result = await client.queryObject(
-      `SELECT p.*, s.name as programme_leader_name, s.email as programme_leader_email 
-       FROM programmes p 
-       LEFT JOIN staff s ON p.programme_leader_id = s.id 
+      `SELECT p.*, s.name as programme_leader_name, s.email as programme_leader_email
+       FROM programmes p
+       LEFT JOIN staff s ON p.programme_leader_id = s.id
        WHERE p.id = $1`,
       [id]
     );
     return result.rows[0] || null;
   }
 
-  static async create(data: any) {
+  static async create(data) {
     const result = await client.queryObject(
       `INSERT INTO programmes (title, level, description, programme_leader_id, image_url, published)
        VALUES ($1, $2, $3, $4, $5, $6)
@@ -57,7 +57,7 @@ export class Programme {
     return result.rows[0];
   }
 
-  static async update(id: number, data: any) {
+  static async update(id, data) {
     const result = await client.queryObject(
       `UPDATE programmes
        SET title = $1, level = $2, description = $3, programme_leader_id = $4, image_url = $5, published = $6
@@ -68,20 +68,20 @@ export class Programme {
     return result.rows[0];
   }
 
-  static async setPublished(id: number, published: boolean) {
+  static async setPublished(id, published) {
     await client.queryObject(
       "UPDATE programmes SET published = $1 WHERE id = $2",
       [published, id]
     );
   }
 
-  static async delete(id: number) {
+  static async delete(id) {
     await client.queryObject("DELETE FROM programme_modules WHERE programme_id = $1", [id]);
     await client.queryObject("DELETE FROM student_interests WHERE programme_id = $1", [id]);
     await client.queryObject("DELETE FROM programmes WHERE id = $1", [id]);
   }
 
-  static async getModules(programmeId: number) {
+  static async getModules(programmeId) {
     const result = await client.queryObject(
       `SELECT m.*, pm.year, s.name as module_leader_name, s.email as module_leader_email
        FROM modules m
@@ -94,19 +94,19 @@ export class Programme {
     return result.rows;
   }
 
-  static async getInterestedCount(programmeId: number) {
+  static async getInterestedCount(programmeId) {
     const result = await client.queryObject(
-      `SELECT COUNT(*) as count 
-       FROM student_interests 
+      `SELECT COUNT(*) as count
+       FROM student_interests
        WHERE programme_id = $1`,
       [programmeId]
     );
-    return parseInt((result.rows[0] as any).count) || 0;
+    return parseInt(result.rows[0].count) || 0;
   }
 
-  static async getInterestedStudents(programmeId: number) {
+  static async getInterestedStudents(programmeId) {
     const result = await client.queryObject(
-      `SELECT s.*, si.registered_at 
+      `SELECT s.*, si.registered_at
        FROM students s
        JOIN student_interests si ON s.id = si.student_id
        WHERE si.programme_id = $1
@@ -116,7 +116,7 @@ export class Programme {
     return result.rows;
   }
 
-  static async assignModule(programmeId: number, moduleId: number, year: number) {
+  static async assignModule(programmeId, moduleId, year) {
     await client.queryObject(
       `INSERT INTO programme_modules (programme_id, module_id, year)
        VALUES ($1, $2, $3)
@@ -125,9 +125,9 @@ export class Programme {
     );
   }
 
-  static async removeModule(programmeId: number, moduleId: number) {
+  static async removeModule(programmeId, moduleId) {
     await client.queryObject(
-      `DELETE FROM programme_modules 
+      `DELETE FROM programme_modules
        WHERE programme_id = $1 AND module_id = $2`,
       [programmeId, moduleId]
     );

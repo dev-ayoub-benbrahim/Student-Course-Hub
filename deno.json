@@ -1,8 +1,8 @@
 {
   "tasks": {
-    "dev": "deno run --allow-net --allow-read --allow-env --allow-write --watch main.ts",
-    "start": "deno run --allow-net --allow-read --allow-env --allow-write main.ts",
-    "seed": "deno run --allow-net --allow-read --allow-env --allow-write db/seed.ts"
+    "dev": "deno run --allow-net --allow-read --allow-env --allow-write --watch main.js",
+    "start": "deno run --allow-net --allow-read --allow-env --allow-write main.js",
+    "seed": "deno run --allow-net --allow-read --allow-env --allow-write db/seed.js"
   },
   "imports": {
     "oak": "jsr:@oak/oak@^17.1.3",

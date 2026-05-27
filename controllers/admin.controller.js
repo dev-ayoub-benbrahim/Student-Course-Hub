@@ -1,22 +1,19 @@
-// deno-lint-ignore-file no-explicit-any
-import { Context, RouterContext } from "oak";
-type Ctx = RouterContext<string>;
-import { Admin } from "../models/Admin.ts";
-import { Programme } from "../models/Programme.ts";
-import { Module } from "../models/Module.ts";
-import { Staff } from "../models/Staff.ts";
-import { Student } from "../models/Student.ts";
-import { sanitizeInput, validateRequired } from "../middleware/security.ts";
-import { setSuccessFlash, setErrorFlash, setInfoFlash } from "../utils/flash.ts";
-import { render } from "../utils/render.ts";
+import { Admin } from "../models/Admin.js";
+import { Programme } from "../models/Programme.js";
+import { Module } from "../models/Module.js";
+import { Staff } from "../models/Staff.js";
+import { Student } from "../models/Student.js";
+import { sanitizeInput, validateRequired } from "../middleware/security.js";
+import { setSuccessFlash, setErrorFlash, setInfoFlash } from "../utils/flash.js";
+import { render } from "../utils/render.js";
 
-function adminPage(ctx: Context, title: string, content: string): string {
+function adminPage(ctx, title, content) {
   const flash = ctx.state.flash;
   const flashHTML = flash
     ? `<div class="flash-message flash-${flash.type}" id="flash-message">${flash.message}</div>`
     : "";
   const path = ctx.request.url.pathname;
-  const nav = (href: string, label: string, cls = "") => {
+  const nav = (href, label, cls = "") => {
     const active = path === href || (href !== "/admin/dashboard" && path.startsWith(href));
     const classes = [active ? "nav-active" : "", cls].filter(Boolean).join(" ");
     return `<li><a href="${href}"${classes ? ` class="${classes}"` : ""}>${label}</a></li>`;
@@ -108,26 +105,26 @@ function adminPage(ctx: Context, title: string, content: string): string {
 </html>`;
 }
 
-export async function showDashboard(ctx: Ctx) {
+export async function showDashboard(ctx) {
   try {
     const adminId = ctx.state.session.adminId;
     const admin = await Admin.findById(adminId);
-    
+
     if (!admin) {
       setErrorFlash(ctx, "Admin not found.");
       ctx.response.redirect("/admin/login");
       return;
     }
-    
+
     const stats = {
       totalProgrammes: (await Programme.findAll({})).length,
       totalModules: (await Module.findAll({})).length,
       totalStudents: (await Student.findAll()).length,
       totalStaff: (await Staff.findAll()).length,
     };
-    
+
     const programmes = await Programme.findAll({});
-    
+
     await render(ctx, "views/admin-dashboard.js", "adminDashboardView", {
       title: "Admin Dashboard",
       admin,
@@ -141,11 +138,11 @@ export async function showDashboard(ctx: Ctx) {
   }
 }
 
-export async function listProgrammes(ctx: Ctx) {
+export async function listProgrammes(ctx) {
   try {
     const programmes = await Programme.findAll({});
 
-    const cards = programmes.map((p: any) => {
+    const cards = programmes.map(p => {
       const initial = (p.title || "P").charAt(0).toUpperCase();
       const imgHTML = p.image_url
         ? `<img src="${p.image_url}" alt="${p.title}" class="dash-prog-image">`
@@ -156,7 +153,7 @@ export async function listProgrammes(ctx: Ctx) {
         : `<span class="mgmt-pub-badge pub-off">Draft</span>`;
 
       return `
-        <div class="dash-prog-card" data-search-title="${(p.title as string).toLowerCase()}">
+        <div class="dash-prog-card" data-search-title="${p.title.toLowerCase()}">
           ${imgHTML}
           <div class="dash-prog-body">
             <div class="dash-prog-meta-row" style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;margin-bottom:0.4rem">
@@ -218,7 +215,7 @@ export async function listProgrammes(ctx: Ctx) {
   }
 }
 
-export async function showCreateProgramme(ctx: Ctx) {
+export async function showCreateProgramme(ctx) {
   try {
     const staff = await Staff.findAll();
     const content = `
@@ -245,7 +242,7 @@ export async function showCreateProgramme(ctx: Ctx) {
             <label for="programmeLeaderId">Programme Leader</label>
             <select id="programmeLeaderId" name="programmeLeaderId">
               <option value="">None</option>
-              ${staff.map((s: any) => `<option value="${s.id}">${s.name}</option>`).join("")}
+              ${staff.map(s => `<option value="${s.id}">${s.name}</option>`).join("")}
             </select>
           </div>
           <div class="form-group">
@@ -267,14 +264,14 @@ export async function showCreateProgramme(ctx: Ctx) {
   }
 }
 
-export async function createProgramme(ctx: Ctx) {
+export async function createProgramme(ctx) {
   try {
     const body = await ctx.request.body.formData();
-    const title = sanitizeInput(body.get("title") as string);
-    const level = sanitizeInput(body.get("level") as string);
-    const description = sanitizeInput(body.get("description") as string);
-    const programmeLeaderId = body.get("programmeLeaderId") as string;
-    const imageUrl = sanitizeInput(body.get("imageUrl") as string);
+    const title = sanitizeInput(body.get("title"));
+    const level = sanitizeInput(body.get("level"));
+    const description = sanitizeInput(body.get("description"));
+    const programmeLeaderId = body.get("programmeLeaderId");
+    const imageUrl = sanitizeInput(body.get("imageUrl"));
 
     if (!validateRequired({ title, level, description }, ["title", "level", "description"]).valid) {
       setErrorFlash(ctx, "Please fill in all required fields.");
@@ -300,7 +297,7 @@ export async function createProgramme(ctx: Ctx) {
   }
 }
 
-export async function showEditProgramme(ctx: Ctx) {
+export async function showEditProgramme(ctx) {
   try {
     const id = parseInt(ctx.params.id);
     const programme = await Programme.findById(id);
@@ -312,7 +309,7 @@ export async function showEditProgramme(ctx: Ctx) {
       return;
     }
 
-    const p = programme as any;
+    const p = programme;
     const content = `
       <a href="/admin/programmes" class="breadcrumb-link">&larr; Back to Programmes</a>
       <h1 style="margin-top:0.5rem">Edit Programme</h1>
@@ -337,7 +334,7 @@ export async function showEditProgramme(ctx: Ctx) {
             <label for="programmeLeaderId">Programme Leader</label>
             <select id="programmeLeaderId" name="programmeLeaderId">
               <option value="">None</option>
-              ${staff.map((s: any) => `<option value="${s.id}" ${s.id === p.programme_leader_id ? "selected" : ""}>${s.name}</option>`).join("")}
+              ${staff.map(s => `<option value="${s.id}" ${s.id === p.programme_leader_id ? "selected" : ""}>${s.name}</option>`).join("")}
             </select>
           </div>
           <div class="form-group">
@@ -365,15 +362,15 @@ export async function showEditProgramme(ctx: Ctx) {
   }
 }
 
-export async function updateProgramme(ctx: Ctx) {
+export async function updateProgramme(ctx) {
   try {
     const id = parseInt(ctx.params.id);
     const body = await ctx.request.body.formData();
-    const title = sanitizeInput(body.get("title") as string);
-    const level = sanitizeInput(body.get("level") as string);
-    const description = sanitizeInput(body.get("description") as string);
-    const programmeLeaderId = body.get("programmeLeaderId") as string;
-    const imageUrl = sanitizeInput(body.get("imageUrl") as string);
+    const title = sanitizeInput(body.get("title"));
+    const level = sanitizeInput(body.get("level"));
+    const description = sanitizeInput(body.get("description"));
+    const programmeLeaderId = body.get("programmeLeaderId");
+    const imageUrl = sanitizeInput(body.get("imageUrl"));
     const published = body.get("published") === "true";
 
     if (!validateRequired({ title, level, description }, ["title", "level", "description"]).valid) {
@@ -400,7 +397,7 @@ export async function updateProgramme(ctx: Ctx) {
   }
 }
 
-export async function deleteProgramme(ctx: Ctx) {
+export async function deleteProgramme(ctx) {
   try {
     const id = parseInt(ctx.params.id);
     await Programme.delete(id);
@@ -413,7 +410,7 @@ export async function deleteProgramme(ctx: Ctx) {
   }
 }
 
-export async function togglePublished(ctx: Ctx) {
+export async function togglePublished(ctx) {
   try {
     const id = parseInt(ctx.params.id);
     const programme = await Programme.findById(id);
@@ -422,9 +419,8 @@ export async function togglePublished(ctx: Ctx) {
       ctx.response.redirect("/admin/programmes");
       return;
     }
-    const currentlyPublished = (programme as any).published;
-    await Programme.setPublished(id, !currentlyPublished);
-    setSuccessFlash(ctx, `Programme ${!currentlyPublished ? "published" : "unpublished"} successfully.`);
+    await Programme.setPublished(id, !programme.published);
+    setSuccessFlash(ctx, `Programme ${!programme.published ? "published" : "unpublished"} successfully.`);
     ctx.response.redirect("/admin/programmes");
   } catch (error) {
     console.error("Error:", error);
@@ -433,7 +429,7 @@ export async function togglePublished(ctx: Ctx) {
   }
 }
 
-export async function showProgrammeModules(ctx: Ctx) {
+export async function showProgrammeModules(ctx) {
   try {
     const programmeId = parseInt(ctx.params.id);
     const programme = await Programme.findById(programmeId);
@@ -446,12 +442,12 @@ export async function showProgrammeModules(ctx: Ctx) {
       return;
     }
 
-    const assignedIds = new Set(assignedModules.map((m: any) => m.id));
-    const unassigned = allModules.filter((m: any) => !assignedIds.has(m.id));
+    const assignedIds = new Set(assignedModules.map(m => m.id));
+    const unassigned = allModules.filter(m => !assignedIds.has(m.id));
 
     const assignedCards = assignedModules.length === 0
       ? `<p class="text-muted" style="padding:var(--space-md)">No modules assigned yet.</p>`
-      : assignedModules.map((m: any) => `
+      : assignedModules.map(m => `
         <div class="assigned-module-card">
           <div class="assigned-module-info">
             <span class="assigned-module-year">Year ${m.year}</span>
@@ -470,7 +466,7 @@ export async function showProgrammeModules(ctx: Ctx) {
         <div>
           <a href="/admin/programmes" class="breadcrumb-link">&larr; Back to Programmes</a>
           <h1 style="margin-top:0.375rem">Module Assignment</h1>
-          <p class="text-muted" style="margin:0">${(programme as any).title}</p>
+          <p class="text-muted" style="margin:0">${programme.title}</p>
         </div>
       </div>
 
@@ -484,7 +480,7 @@ export async function showProgrammeModules(ctx: Ctx) {
                   <label for="moduleId">Module</label>
                   <select name="moduleId" id="moduleId" required>
                     <option value="">— Select a module —</option>
-                    ${unassigned.map((m: any) => `<option value="${m.id}">${m.code} &ndash; ${m.title}</option>`).join("")}
+                    ${unassigned.map(m => `<option value="${m.id}">${m.code} &ndash; ${m.title}</option>`).join("")}
                   </select>
                 </div>
                 <div class="form-group">
@@ -521,12 +517,12 @@ export async function showProgrammeModules(ctx: Ctx) {
   }
 }
 
-export async function assignModuleToProgramme(ctx: Ctx) {
+export async function assignModuleToProgramme(ctx) {
   try {
     const programmeId = parseInt(ctx.params.id);
     const body = await ctx.request.body.formData();
-    const moduleId = parseInt(body.get("moduleId") as string);
-    const year = parseInt(body.get("year") as string);
+    const moduleId = parseInt(body.get("moduleId"));
+    const year = parseInt(body.get("year"));
 
     await Programme.assignModule(programmeId, moduleId, year);
     setSuccessFlash(ctx, "Module assigned successfully!");
@@ -538,7 +534,7 @@ export async function assignModuleToProgramme(ctx: Ctx) {
   }
 }
 
-export async function removeModuleFromProgramme(ctx: Ctx) {
+export async function removeModuleFromProgramme(ctx) {
   try {
     const programmeId = parseInt(ctx.params.id);
     const moduleId = parseInt(ctx.params.moduleId);
@@ -553,9 +549,9 @@ export async function removeModuleFromProgramme(ctx: Ctx) {
   }
 }
 
-function moduleAccent(code: string) {
+function moduleAccent(code) {
   const prefix = (code || "").replace(/\d.*$/, "").toUpperCase();
-  const map: any = {
+  const map = {
     IMAT: { bg: "#f3e8ff", border: "#7e22ce", text: "#7e22ce" },
     CTEC: { bg: "#e8eef7", border: "#1e40af", text: "#1e40af" },
     DATA: { bg: "#ecfdf5", border: "#065f46", text: "#065f46" },
@@ -563,14 +559,14 @@ function moduleAccent(code: string) {
   return map[prefix] || { bg: "#f1f5f9", border: "#475569", text: "#475569" };
 }
 
-export async function listModules(ctx: Ctx) {
+export async function listModules(ctx) {
   try {
     const modules = await Module.findAll({});
 
-    const cards = modules.map((m: any) => {
+    const cards = modules.map(m => {
       const accent = moduleAccent(m.code);
       return `
-        <div class="mgmt-mod-card" data-search-title="${(m.title as string).toLowerCase()} ${(m.code as string).toLowerCase()}" style="border-top:4px solid ${accent.border}">
+        <div class="mgmt-mod-card" data-search-title="${m.title.toLowerCase()} ${m.code.toLowerCase()}" style="border-top:4px solid ${accent.border}">
           <div class="staff-mod-header">
             <span class="staff-mod-code" style="background:${accent.bg};color:${accent.text}">${m.code}</span>
             <span class="staff-mod-credits">${m.credits} cr</span>
@@ -621,7 +617,7 @@ export async function listModules(ctx: Ctx) {
   }
 }
 
-export async function showCreateModule(ctx: Ctx) {
+export async function showCreateModule(ctx) {
   try {
     const staff = await Staff.findAll();
     const content = `
@@ -649,7 +645,7 @@ export async function showCreateModule(ctx: Ctx) {
             <label for="moduleLeaderId">Module Leader</label>
             <select id="moduleLeaderId" name="moduleLeaderId">
               <option value="">None</option>
-              ${staff.map((s: any) => `<option value="${s.id}">${s.name}</option>`).join("")}
+              ${staff.map(s => `<option value="${s.id}">${s.name}</option>`).join("")}
             </select>
           </div>
           <div class="form-actions">
@@ -667,14 +663,14 @@ export async function showCreateModule(ctx: Ctx) {
   }
 }
 
-export async function createModule(ctx: Ctx) {
+export async function createModule(ctx) {
   try {
     const body = await ctx.request.body.formData();
-    const code = sanitizeInput(body.get("code") as string);
-    const title = sanitizeInput(body.get("title") as string);
-    const credits = parseInt(body.get("credits") as string);
-    const description = sanitizeInput(body.get("description") as string);
-    const moduleLeaderId = body.get("moduleLeaderId") as string;
+    const code = sanitizeInput(body.get("code"));
+    const title = sanitizeInput(body.get("title"));
+    const credits = parseInt(body.get("credits"));
+    const description = sanitizeInput(body.get("description"));
+    const moduleLeaderId = body.get("moduleLeaderId");
 
     if (!validateRequired({ code, title, description }, ["code", "title", "description"]).valid || !credits) {
       setErrorFlash(ctx, "Please fill in all required fields.");
@@ -692,10 +688,10 @@ export async function createModule(ctx: Ctx) {
 
     setSuccessFlash(ctx, "Module created successfully!");
     ctx.response.redirect("/admin/modules");
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error:", error);
     if (error?.fields?.code === "23505") {
-      setErrorFlash(ctx, `A module with that code already exists. Please use a different code.`);
+      setErrorFlash(ctx, "A module with that code already exists. Please use a different code.");
     } else {
       setErrorFlash(ctx, "Failed to create module.");
     }
@@ -703,19 +699,18 @@ export async function createModule(ctx: Ctx) {
   }
 }
 
-export async function showEditModule(ctx: Ctx) {
+export async function showEditModule(ctx) {
   try {
     const id = parseInt(ctx.params.id);
-    const module = await Module.findById(id);
+    const mod = await Module.findById(id);
     const staff = await Staff.findAll();
 
-    if (!module) {
+    if (!mod) {
       setErrorFlash(ctx, "Module not found.");
       ctx.response.redirect("/admin/modules");
       return;
     }
 
-    const m = module as any;
     const content = `
       <a href="/admin/modules" class="breadcrumb-link">&larr; Back to Modules</a>
       <h1 style="margin-top:0.5rem">Edit Module</h1>
@@ -723,25 +718,25 @@ export async function showEditModule(ctx: Ctx) {
         <form method="POST" action="/admin/modules/${id}/update">
           <div class="form-group">
             <label for="code">Module Code</label>
-            <input id="code" name="code" value="${m.code}" required>
+            <input id="code" name="code" value="${mod.code}" required>
           </div>
           <div class="form-group">
             <label for="title">Title</label>
-            <input id="title" name="title" value="${m.title}" required>
+            <input id="title" name="title" value="${mod.title}" required>
           </div>
           <div class="form-group">
             <label for="credits">Credits</label>
-            <input id="credits" type="number" name="credits" value="${m.credits}" min="1" required>
+            <input id="credits" type="number" name="credits" value="${mod.credits}" min="1" required>
           </div>
           <div class="form-group">
             <label for="description">Description</label>
-            <textarea id="description" name="description" required>${m.description}</textarea>
+            <textarea id="description" name="description" required>${mod.description}</textarea>
           </div>
           <div class="form-group">
             <label for="moduleLeaderId">Module Leader</label>
             <select id="moduleLeaderId" name="moduleLeaderId">
               <option value="">None</option>
-              ${staff.map((s: any) => `<option value="${s.id}" ${s.id === m.module_leader_id ? "selected" : ""}>${s.name}</option>`).join("")}
+              ${staff.map(s => `<option value="${s.id}" ${s.id === mod.module_leader_id ? "selected" : ""}>${s.name}</option>`).join("")}
             </select>
           </div>
           <div class="form-actions">
@@ -759,15 +754,15 @@ export async function showEditModule(ctx: Ctx) {
   }
 }
 
-export async function updateModule(ctx: Ctx) {
+export async function updateModule(ctx) {
   try {
     const id = parseInt(ctx.params.id);
     const body = await ctx.request.body.formData();
-    const code = sanitizeInput(body.get("code") as string);
-    const title = sanitizeInput(body.get("title") as string);
-    const credits = parseInt(body.get("credits") as string);
-    const description = sanitizeInput(body.get("description") as string);
-    const moduleLeaderId = body.get("moduleLeaderId") as string;
+    const code = sanitizeInput(body.get("code"));
+    const title = sanitizeInput(body.get("title"));
+    const credits = parseInt(body.get("credits"));
+    const description = sanitizeInput(body.get("description"));
+    const moduleLeaderId = body.get("moduleLeaderId");
 
     if (!validateRequired({ code, title, description }, ["code", "title", "description"]).valid || !credits) {
       setErrorFlash(ctx, "Please fill in all required fields.");
@@ -785,10 +780,10 @@ export async function updateModule(ctx: Ctx) {
 
     setSuccessFlash(ctx, "Module updated successfully!");
     ctx.response.redirect("/admin/modules");
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error:", error);
     if (error?.fields?.code === "23505") {
-      setErrorFlash(ctx, `A module with that code already exists. Please use a different code.`);
+      setErrorFlash(ctx, "A module with that code already exists. Please use a different code.");
     } else {
       setErrorFlash(ctx, "Failed to update module.");
     }
@@ -796,7 +791,7 @@ export async function updateModule(ctx: Ctx) {
   }
 }
 
-export async function deleteModule(ctx: Ctx) {
+export async function deleteModule(ctx) {
   try {
     const id = parseInt(ctx.params.id);
     await Module.delete(id);
@@ -809,13 +804,12 @@ export async function deleteModule(ctx: Ctx) {
   }
 }
 
-export async function listStudents(ctx: Ctx) {
+export async function listStudents(ctx) {
   try {
     const students = await Student.findAllWithInterestSummary();
-    const rows = (students as any[]).map((s) => {
+    const rows = students.map(s => {
       const programmes = s.interested_programmes
-        ? s.interested_programmes.split(", ").map((t: string) =>
-            `<span class="interest-tag">${t}</span>`).join("")
+        ? s.interested_programmes.split(", ").map(t => `<span class="interest-tag">${t}</span>`).join("")
         : `<span class="text-muted">None</span>`;
       return `
       <tr>
@@ -849,7 +843,7 @@ export async function listStudents(ctx: Ctx) {
   }
 }
 
-export async function exportMailingList(ctx: Ctx) {
+export async function exportMailingList(ctx) {
   try {
     const programmeId = parseInt(ctx.params.id);
     const students = await Programme.getInterestedStudents(programmeId);
@@ -860,7 +854,7 @@ export async function exportMailingList(ctx: Ctx) {
       return;
     }
 
-    const csv = "Name,Email\n" + students.map((s: any) => `${s.name},${s.email}`).join("\n");
+    const csv = "Name,Email\n" + students.map(s => `${s.name},${s.email}`).join("\n");
 
     ctx.response.headers.set("Content-Type", "text/csv");
     ctx.response.headers.set("Content-Disposition", `attachment; filename="mailing-list-${programmeId}.csv"`);
@@ -872,7 +866,7 @@ export async function exportMailingList(ctx: Ctx) {
   }
 }
 
-export async function showMailingList(ctx: Ctx) {
+export async function showMailingList(ctx) {
   try {
     const programmeId = parseInt(ctx.params.id);
     const programme = await Programme.findById(programmeId);
@@ -884,7 +878,7 @@ export async function showMailingList(ctx: Ctx) {
       return;
     }
 
-    const rows = students.map((s: any) => `
+    const rows = students.map(s => `
       <tr>
         <td>${s.name}</td>
         <td><a href="mailto:${s.email}">${s.email}</a></td>
@@ -894,7 +888,7 @@ export async function showMailingList(ctx: Ctx) {
 
     const content = `
       <div class="dash-section-header">
-        <h1>Mailing List: ${(programme as any).title}</h1>
+        <h1>Mailing List: ${programme.title}</h1>
         <div style="display:flex;gap:0.5rem">
           <a href="/admin/programmes/${programmeId}/mailing-list/export" class="btn btn-primary">Export CSV</a>
           <a href="/admin/programmes" class="btn">Back</a>
@@ -915,7 +909,7 @@ export async function showMailingList(ctx: Ctx) {
   }
 }
 
-export async function deleteStudent(ctx: Ctx) {
+export async function deleteStudent(ctx) {
   try {
     const id = parseInt(ctx.params.id);
     await Student.delete(id);

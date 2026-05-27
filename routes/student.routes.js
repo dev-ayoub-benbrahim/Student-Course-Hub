@@ -1,5 +1,5 @@
 import { Router } from "oak";
-import * as StudentController from "../controllers/student.controller.ts";
+import * as StudentController from "../controllers/student.controller.js";
 
 export const studentRoutes = new Router();
 

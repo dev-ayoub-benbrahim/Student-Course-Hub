@@ -1,16 +1,14 @@
-import { Context, RouterContext } from "oak";
-type Ctx = RouterContext<string>;
-import { Programme, Module, Student } from "../models/mod.ts";
-import { sanitizeInput, isValidEmail, validateRequired } from "../middleware/security.ts";
-import { render } from "../utils/render.ts";
-import { setSuccessFlash, setErrorFlash, setInfoFlash, FlashMessages } from "../utils/flash.ts";
+import { Programme, Module, Student } from "../models/mod.js";
+import { sanitizeInput, isValidEmail, validateRequired } from "../middleware/security.js";
+import { render } from "../utils/render.js";
+import { setSuccessFlash, setErrorFlash, setInfoFlash, FlashMessages } from "../utils/flash.js";
 
-export async function listProgrammes(ctx: Ctx) {
+export async function listProgrammes(ctx) {
   try {
     const level = ctx.request.url.searchParams.get("level");
     const searchQuery = ctx.request.url.searchParams.get("q");
-    
-    const filters: any = { published: true };
+
+    const filters = { published: true };
     if (level) filters.level = level;
     if (searchQuery) filters.search = searchQuery;
 
@@ -21,8 +19,8 @@ export async function listProgrammes(ctx: Ctx) {
 
     const totalStats = {
       total: allProgrammes.length,
-      undergraduate: allProgrammes.filter((p: any) => p.level === "undergraduate").length,
-      postgraduate:  allProgrammes.filter((p: any) => p.level === "postgraduate").length,
+      undergraduate: allProgrammes.filter(p => p.level === "undergraduate").length,
+      postgraduate:  allProgrammes.filter(p => p.level === "postgraduate").length,
     };
 
     await render(ctx, "views/home.js", "homeView", {
@@ -39,29 +37,29 @@ export async function listProgrammes(ctx: Ctx) {
   }
 }
 
-export async function viewProgramme(ctx: Ctx) {
+export async function viewProgramme(ctx) {
   try {
     const id = parseInt(ctx.params.id);
     const programme = await Programme.findById(id);
-    
+
     if (!programme) {
       setErrorFlash(ctx, FlashMessages.PROGRAMME_NOT_FOUND);
       ctx.response.redirect("/");
       return;
     }
-    
+
     const modules = await Programme.getModules(id);
     const interestedCount = await Programme.getInterestedCount(id);
-    
-    const modulesByYear: { [key: number]: any[] } = {};
-    for (const module of modules) {
-      const year = (module as any).year || 1;
+
+    const modulesByYear = {};
+    for (const mod of modules) {
+      const year = mod.year || 1;
       if (!modulesByYear[year]) modulesByYear[year] = [];
-      modulesByYear[year].push(module);
+      modulesByYear[year].push(mod);
     }
-    
+
     await render(ctx, "views/programme-detail.js", "programmeDetailView", {
-      title: (programme as any).title,
+      title: programme.title,
       programme,
       modulesByYear,
       interestedCount,
@@ -73,22 +71,22 @@ export async function viewProgramme(ctx: Ctx) {
   }
 }
 
-export async function viewModule(ctx: Ctx) {
+export async function viewModule(ctx) {
   try {
     const id = parseInt(ctx.params.id);
-    const module = await Module.findById(id);
-    
-    if (!module) {
+    const mod = await Module.findById(id);
+
+    if (!mod) {
       setErrorFlash(ctx, FlashMessages.MODULE_NOT_FOUND);
       ctx.response.redirect("/");
       return;
     }
-    
+
     const programmes = await Module.getProgrammes(id);
-    
+
     await render(ctx, "views/module-detail.js", "moduleDetailView", {
-      title: `${(module as any).code}: ${(module as any).title}`,
-      module,
+      title: `${mod.code}: ${mod.title}`,
+      module: mod,
       programmes,
     });
   } catch (error) {
@@ -98,17 +96,17 @@ export async function viewModule(ctx: Ctx) {
   }
 }
 
-export async function showRegisterInterest(ctx: Ctx) {
+export async function showRegisterInterest(ctx) {
   try {
     const programmeId = parseInt(ctx.params.id);
     const programme = await Programme.findById(programmeId);
-    
+
     if (!programme) {
       setErrorFlash(ctx, FlashMessages.PROGRAMME_NOT_FOUND);
       ctx.response.redirect("/");
       return;
     }
-    
+
     ctx.response.redirect(`/programmes/${programmeId}`);
   } catch (error) {
     console.error("Error:", error);
@@ -116,46 +114,46 @@ export async function showRegisterInterest(ctx: Ctx) {
   }
 }
 
-export async function registerInterest(ctx: Ctx) {
+export async function registerInterest(ctx) {
   try {
     const programmeId = parseInt(ctx.params.id);
     const programme = await Programme.findById(programmeId);
-    
+
     if (!programme) {
       setErrorFlash(ctx, FlashMessages.PROGRAMME_NOT_FOUND);
       ctx.response.redirect("/");
       return;
     }
-    
+
     const body = await ctx.request.body.formData();
-    const name = sanitizeInput(body.get("name") as string);
-    const email = sanitizeInput(body.get("email") as string);
-    
+    const name = sanitizeInput(body.get("name"));
+    const email = sanitizeInput(body.get("email"));
+
     if (!validateRequired({ name, email }, ["name", "email"]).valid) {
       setErrorFlash(ctx, FlashMessages.REQUIRED_FIELDS);
       ctx.response.redirect(`/programmes/${programmeId}`);
       return;
     }
-    
+
     if (!isValidEmail(email)) {
       setErrorFlash(ctx, FlashMessages.INVALID_EMAIL);
       ctx.response.redirect(`/programmes/${programmeId}`);
       return;
     }
-    
+
     let student = await Student.findByEmail(email);
     if (!student) {
-      student = await Student.create({ name, email }) as any;
+      student = await Student.create({ name, email });
     }
-    
-    const existingInterest = await Student.hasInterest((student as any).id, programmeId);
+
+    const existingInterest = await Student.hasInterest(student.id, programmeId);
     if (existingInterest) {
       setInfoFlash(ctx, FlashMessages.INTEREST_ALREADY_REGISTERED);
       ctx.response.redirect(`/programmes/${programmeId}`);
       return;
     }
-    
-    await Student.registerInterest((student as any).id, programmeId);
+
+    await Student.registerInterest(student.id, programmeId);
     setSuccessFlash(ctx, FlashMessages.INTEREST_REGISTERED);
     ctx.response.redirect(`/programmes/${programmeId}`);
   } catch (error) {
@@ -165,10 +163,10 @@ export async function registerInterest(ctx: Ctx) {
   }
 }
 
-export async function showMyInterests(ctx: Ctx) {
+export async function showMyInterests(ctx) {
   try {
     const email = ctx.request.url.searchParams.get("email");
-    
+
     if (!email) {
       await render(ctx, "views/my-interests.js", "myInterestsView", {
         title: "My Interests",
@@ -176,26 +174,26 @@ export async function showMyInterests(ctx: Ctx) {
       });
       return;
     }
-    
+
     if (!isValidEmail(email)) {
       setErrorFlash(ctx, FlashMessages.INVALID_EMAIL);
       ctx.response.redirect("/my-interests");
       return;
     }
-    
+
     const student = await Student.findByEmail(email);
     if (!student) {
       setInfoFlash(ctx, "No interests found for this email.");
       ctx.response.redirect("/my-interests");
       return;
     }
-    
-    const interests = await Student.findAllWithProgrammes((student as any).id);
-    
+
+    const interests = await Student.findAllWithProgrammes(student.id);
+
     await render(ctx, "views/my-interests.js", "myInterestsView", {
       title: "My Interests",
       studentEmail: email,
-      studentName: (student as any).name,
+      studentName: student.name,
       interests,
     });
   } catch (error) {
@@ -205,20 +203,20 @@ export async function showMyInterests(ctx: Ctx) {
   }
 }
 
-export async function withdrawInterest(ctx: Ctx) {
+export async function withdrawInterest(ctx) {
   try {
     const body = await ctx.request.body.formData();
-    const email = sanitizeInput(body.get("email") as string);
-    const programmeId = parseInt(body.get("programmeId") as string);
-    
+    const email = sanitizeInput(body.get("email"));
+    const programmeId = parseInt(body.get("programmeId"));
+
     const student = await Student.findByEmail(email);
     if (!student) {
       setErrorFlash(ctx, "Student not found.");
       ctx.response.redirect("/my-interests");
       return;
     }
-    
-    await Student.withdrawInterest((student as any).id, programmeId);
+
+    await Student.withdrawInterest(student.id, programmeId);
     setSuccessFlash(ctx, FlashMessages.INTEREST_WITHDRAWN);
     ctx.response.redirect(`/my-interests?email=${encodeURIComponent(email)}`);
   } catch (error) {
@@ -228,7 +226,7 @@ export async function withdrawInterest(ctx: Ctx) {
   }
 }
 
-export async function searchProgrammes(ctx: Ctx) {
+export async function searchProgrammes(ctx) {
   const q = ctx.request.url.searchParams.get("q") || "";
   const level = ctx.request.url.searchParams.get("level") || "";
   const params = new URLSearchParams();
@@ -238,12 +236,12 @@ export async function searchProgrammes(ctx: Ctx) {
   ctx.response.redirect(query ? `/?${query}` : "/");
 }
 
-export async function apiListProgrammes(ctx: Ctx) {
+export async function apiListProgrammes(ctx) {
   try {
     const q = ctx.request.url.searchParams.get("q") || "";
     const level = ctx.request.url.searchParams.get("level") || "";
 
-    const filters: any = { published: true };
+    const filters = { published: true };
     if (level) filters.level = level;
     if (q) filters.search = q;
 
@@ -259,7 +257,7 @@ export async function apiListProgrammes(ctx: Ctx) {
   }
 }
 
-export async function apiToggleInterest(ctx: Ctx) {
+export async function apiToggleInterest(ctx) {
   try {
     const programmeId = parseInt(ctx.params.id);
     const programme = await Programme.findById(programmeId);
@@ -291,10 +289,10 @@ export async function apiToggleInterest(ctx: Ctx) {
 
     let student = await Student.findByEmail(email);
     if (!student) {
-      student = await Student.create({ name, email }) as any;
+      student = await Student.create({ name, email });
     }
 
-    const existingInterest = await Student.hasInterest((student as any).id, programmeId);
+    const existingInterest = await Student.hasInterest(student.id, programmeId);
     const count = await Programme.getInterestedCount(programmeId);
 
     ctx.response.headers.set("Content-Type", "application/json");
@@ -308,7 +306,7 @@ export async function apiToggleInterest(ctx: Ctx) {
       return;
     }
 
-    await Student.registerInterest((student as any).id, programmeId);
+    await Student.registerInterest(student.id, programmeId);
     const updatedCount = await Programme.getInterestedCount(programmeId);
 
     ctx.response.body = JSON.stringify({
